@@ -1,4 +1,14 @@
 <script setup>
+        /* 导入pinia中的user数据 */
+        import {defineUser} from '../store/userStore.js'
+        let sysUser =defineUser()
+        /* 获取 编程式路由对象 */
+        import {useRouter} from 'vue-router'
+        let router =useRouter();
+        /* 导入axios请求对象 */
+        import request from '../utils/request.js'
+
+       // 导入ref,reactive处理响应式数据的方法
        import{ ref,reactive} from 'vue'
        // 响应式数据,保存用户输入的表单信息
        let loginUser =reactive({
@@ -36,6 +46,35 @@
             userPwdMsg.value="ok"
             return true
         }
+
+
+        // 登录的函数
+        async function  login(){
+            console.log("发送异步请求")
+            let {data} = await request.post("/user/login",loginUser)
+            if(data.code == 200){
+                alert("登录成功")
+                // 更新pinia数据
+                sysUser.uid =data.data.loginUser.uid
+                sysUser.username =data.data.loginUser.username
+                // 跳转到日程查询页
+                router.push("/showSchedule")
+
+            }else if(data.code == 501){
+                alert("用户名有误,请重新输入")
+            }else if(data.code == 503){
+                alert("密码有误,请重新输入")
+            }else {
+                alert("出现未知名错误")
+            }
+        }
+        // 清除表单信息的方法
+        function clearForm(){
+            loginUser.username=''
+            loginUser.userPwd=''
+            usernameMsg.value=''
+            userPwdMsg.value=''
+        }
 </script>
 
 <template>
@@ -64,8 +103,8 @@
             </tr>
             <tr class="ltr">
                 <td colspan="2" class="buttonContainer">
-                    <input class="btn1" type="button" value="登录">
-                    <input class="btn1" type="button" value="重置">
+                    <input class="btn1" type="button" @click="login()" value="登录">
+                    <input class="btn1" type="button" @click="clearForm()" value="重置">
                     <router-link to="/regist">
                       <button class="btn1">去注册</button>
                     </router-link>
@@ -108,3 +147,4 @@
             text-align: center;
         }
 </style>
+

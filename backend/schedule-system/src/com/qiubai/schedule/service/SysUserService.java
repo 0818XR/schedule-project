@@ -17,9 +17,16 @@ public interface SysUserService {
     /**
      * 该方法读取传入的sysUser参数进行登录验证
      * @param sysUser 要登录的用户名和明文密码以SysUser对象的形式传入
-     * @return  用户名错误返回1 密码错误返回2 登录成功返回3
+     * @return  返回登录的用户信息
      */
     int login(SysUser sysUser);
+
+    /**
+     * 通过用户名找到用户
+     * @param sysUser 要登录的用户名和明文密码以SysUser对象的形式传入
+     * @return 返回找到的用户
+     */
+    SysUser findByUsername(SysUser sysUser);
 
     /**
      * 用于检查用户是否被占用

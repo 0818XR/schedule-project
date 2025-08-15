@@ -1,68 +1,90 @@
 <script setup>
-      import{ ref,reactive} from 'vue'
-       // 响应式数据,保存用户输入的表单信息
-       let registUser =reactive({
-        username:'',
-        userPwd:''
-       })
+    import {ref,reactive} from 'vue'
+    /* 导入发送请求的axios对象 */
+    import request from'../utils/request'
 
-       // 响应式数据,保存校验的提示信息
-       let reUserPwd =ref('')
-       let reUserPwdMsg =ref('')
-       let usernameMsg =ref('')
-       let userPwdMsg = ref('')
+    import {useRouter} from 'vue-router'
+    const router = useRouter()
 
-          // 校验用户名的方法
-        function checkUsername(){
-            // 定义正则
-            let usernameReg=/^[a-zA-Z0-9]{5,10}$/
-            // 校验
-            if(!usernameReg.test(registUser.username)){
-              // 提示
-              usernameMsg.value = "不合法"
-              return false
-            }
-            // 通过校验
-            usernameMsg.value="OK"
-            return true
+    let registUser = reactive({
+        username:"",
+        userPwd:""
+    })
+    let usernameMsg=ref('')
+    let userPwdMsg=ref('')
+    let reUserPwdMsg=ref('')
+    let reUserPwd=ref('')
+    async function checkUsername(){
+        let usernameReg= /^[a-zA-Z0-9]{5,10}$/
+        if(!usernameReg.test(registUser.username)){
+            usernameMsg.value="格式有误"
+            return false
         }
-        // 校验密码的方法
-        function checkUserPwd(){
-            // 定义正则
-            let passwordReg=/^[0-9]{6}$/
-             // 校验
-             if(!passwordReg.test(registUser.userPwd)){
-              // 提示
-              userPwdMsg.value = "不合法"
-              return false
-            }
-            // 通过校验
-            userPwdMsg.value="OK"
-            return true
+        // 发送异步请求   继续校验用户名是否被占用
+        let {data} = await request.post(`user/checkUsernameUsed?username=${registUser.username}`)
+        if(data.code != 200){
+            usernameMsg.value="用户名占用"
+            return false
         }
-        // 校验密码的方法
-        function checkReUserPwd(){
-            // 定义正则
-            let passwordReg=/^[0-9]{6}$/
-            // 校验
-            if(!passwordReg.test(reUserPwd.value)){
-              // 提示
-              reUserPwdMsg.value = "不合法"
-              return false
-            }
-            console.log(registUser.userPwd,reUserPwd.value)
-            // 校验
-            if(!(registUser.userPwd==reUserPwd.value)){
-              // 提示
-              reUserPwdMsg.value = "不一致"
-              return false
-            }
+        usernameMsg.value="可用"
+        return true
+    }
+
+    function checkUserPwd(){
+        let userPwdReg = /^[0-9]{6}$/
+        if(!userPwdReg.test(registUser.userPwd)){
+            userPwdMsg.value="格式有误"
+            return false
+        }
+        userPwdMsg.value="OK"
+        return true
+    }
+
+    function checkReUserPwd(){
+        let userPwdReg = /^[0-9]{6}$/
+        if(!userPwdReg.test(reUserPwd.value)){
+            reUserPwdMsg.value="格式有误"
+            return false
+        }
+        if(registUser.userPwd != reUserPwd.value){
+            reUserPwdMsg.value="两次密码不一致"
+            return false
+        }
+        reUserPwdMsg.value="OK"
+        return true
+    }
+
+    // 注册的方法
+    async function regist(){
+        // 校验所有的输入框是否合法
+        let flag1 =await checkUsername()
+        let flag2 =await checkUserPwd()
+        let flag3 =await checkReUserPwd()
+        if(flag1 && flag2 && flag3){
+          let  {data}= await request.post("user/regist",registUser)
+          if(data.code == 200){
+            // 注册成功跳转 登录页
+            alert("注册成功,快去登录吧")
+            router.push("/login")
+          }else{
+            alert("抱歉,用户名被抢注了")
+          }
+        }else{
+            alert("校验不通过,请求再次检查数据")
+        }
+    }
+
+    function clearForm(){
+        registUser.username=""
+        registUser.userPwd=""
+        usernameMsg.value=""
+        userPwdMsg.value=""
+        reUserPwd.value=""
+        reUserPwdMsg.value=""
+
+    }
 
 
-            // 通过校验
-            reUserPwdMsg.value="OK"
-            return true
-        }
 </script>
 
 <template>
@@ -108,19 +130,16 @@
         </tr>
         <tr class="ltr">
             <td colspan="2" class="buttonContainer">
-                <input class="btn1" type="button" value="注册">
-                <input class="btn1" type="button" value="重置">
+                <input class="btn1" type="button" @click="regist()" value="注册">
+                <input class="btn1" type="button" @click="clearForm()" value="重置">
                 <router-link to="/login">
                   <button class="btn1">去登录</button>
                 </router-link>
             </td>
         </tr>
     </table>
-
-
   </div>
 </template>
-
 <style scoped>
        .ht{
             text-align: center;

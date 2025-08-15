@@ -43,6 +43,12 @@ public class SysUserServiceImpl implements SysUserService {
     }
 
     @Override
+    public SysUser findByUsername(SysUser sysUser) {
+        List<SysUser> list = userDao.findByName(sysUser.getUsername());
+        return list.get(0);
+    }
+
+    @Override
     public boolean checkUsernameUsed(String username) {
         List<SysUser> sysUsers = userDao.findByName(username);
         return sysUsers.isEmpty();

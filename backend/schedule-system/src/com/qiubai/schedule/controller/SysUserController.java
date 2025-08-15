@@ -7,6 +7,7 @@ import com.qiubai.schedule.common.ResultCodeEnum;
 import com.qiubai.schedule.pojo.SysUser;
 import com.qiubai.schedule.service.SysUserService;
 import com.qiubai.schedule.service.impl.SysUserServiceImpl;
+import com.qiubai.schedule.util.MD5Util;
 import com.qiubai.schedule.util.WebUtil;
 import jakarta.servlet.ServletException;
 import jakarta.servlet.annotation.WebServlet;
@@ -15,6 +16,8 @@ import jakarta.servlet.http.HttpServletResponse;
 import jakarta.servlet.http.HttpSession;
 
 import java.io.IOException;
+import java.util.HashMap;
+import java.util.Map;
 
 @WebServlet("/user/*")
 public class SysUserController extends BaseController{
@@ -46,13 +49,18 @@ public class SysUserController extends BaseController{
      */
     protected void login(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
         SysUser sysUser = WebUtil.readJson(req, SysUser.class);
-//        用户名错误返回1 密码错误返回2 登录成功返回3
-        int res = userService.login(sysUser);
+//        int res = userService.login(sysUser);
+        SysUser sysUserRes = userService.findByUsername(sysUser);
         Result result = null;
-        switch (res) {
-            case 1 -> result = Result.build(null, ResultCodeEnum.USERNAME_USED);
-            case 2 -> result = Result.build(null, ResultCodeEnum.PASSWORD_ERROR);
-            case 3 -> result = Result.ok(null);
+        if(null == sysUserRes) {
+            result = Result.build(null,ResultCodeEnum.USERNAME_ERROR);
+        } else if(!MD5Util.encrypt(sysUser.getUserPwd()).equals(sysUserRes.getUserPwd())) {
+            result = Result.build(null,ResultCodeEnum.PASSWORD_ERROR);
+        } else {
+            Map data = new HashMap();
+            sysUserRes.setUserPwd("");
+            data.put("loginUser",sysUserRes);
+            result = Result.ok(data);
         }
         WebUtil.writeJson(resp, result);
     }
