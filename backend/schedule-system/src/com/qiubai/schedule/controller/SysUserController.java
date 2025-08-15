@@ -28,15 +28,13 @@ public class SysUserController extends BaseController{
      * @throws IOException
      */
     protected void regist(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        String username = req.getParameter("username");
-        String userPwd = req.getParameter("userPwd");
-        SysUser sysUser = new SysUser(null, username, userPwd);
+        SysUser sysUser = WebUtil.readJson(req, SysUser.class);
         int rows = userService.regist(sysUser);
-        if(rows > 0) {
-            resp.sendRedirect("/registSuccess.html");
-        } else {
-            resp.sendRedirect("/registFail.html");
+        Result result = Result.ok(null);
+        if(rows < 1) {
+            result = Result.build(null, ResultCodeEnum.USERNAME_USED);
         }
+        WebUtil.writeJson(resp,result);
     }
 
     /**
@@ -47,20 +45,16 @@ public class SysUserController extends BaseController{
      * @throws IOException
      */
     protected void login(HttpServletRequest req, HttpServletResponse resp) throws ServletException, IOException {
-        String username = req.getParameter("username");
-        String userPwd = req.getParameter("userPwd");
-        SysUser sysUser = new SysUser(null, username, userPwd);
-        int result = userService.login(sysUser);
-        switch (result) {
-            case 1 -> resp.sendRedirect("/loginUsernameError.html");
-            case 2 -> resp.sendRedirect("/loginUserPwdError.html");
-            case 3 -> {
-                HttpSession session = req.getSession();
-                // 此处使用的sysUser中没有uid，在后面使用此session时需要注意
-                session.setAttribute("sysUser",sysUser);
-                resp.sendRedirect("/showSchedule.html");
-            }
+        SysUser sysUser = WebUtil.readJson(req, SysUser.class);
+//        用户名错误返回1 密码错误返回2 登录成功返回3
+        int res = userService.login(sysUser);
+        Result result = null;
+        switch (res) {
+            case 1 -> result = Result.build(null, ResultCodeEnum.USERNAME_USED);
+            case 2 -> result = Result.build(null, ResultCodeEnum.PASSWORD_ERROR);
+            case 3 -> result = Result.ok(null);
         }
+        WebUtil.writeJson(resp, result);
     }
 
     /**
